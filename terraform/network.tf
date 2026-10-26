@@ -39,3 +39,14 @@ resource "aws_subnet" "public_b" {
     ManagedBy   = "terraform"
   }
 }
+
+resource "aws_internet_gateway" "cloud_api" {
+  vpc_id = aws_vpc.cloud_api.id
+
+  tags = {
+    Name        = "cloud-api-igw"
+    Environment = var.environment
+    Project     = "cloud-api"
+    ManagedBy   = "terraform"
+  }
+}
