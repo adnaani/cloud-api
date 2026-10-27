@@ -15,8 +15,7 @@ module "alb" {
   vpc_id            = module.networking.vpc_id
   public_subnet_ids = [module.networking.public_subnet_a_id, module.networking.public_subnet_b_id]
   security_group_id = module.security.alb_security_group_id
-  # Subnet references alone do not express the ALB's internet-routing requirement.
-  depends_on = [module.networking]
+  depends_on        = [module.networking]
 }
 
 module "iam" {
@@ -32,4 +31,12 @@ module "logging" {
 module "ecr" {
   source      = "./modules/ecr"
   environment = var.environment
+}
+
+module "ecs" {
+  source             = "./modules/ecs"
+  environment        = var.environment
+  cloud_api_image    = "${module.ecr.repository_url}:v1"
+  execution_role_arn = module.iam.execution_role_arn
+  log_group_name     = module.logging.log_group_name
 }

@@ -39,7 +39,7 @@ Terraform configuration also defines networking, security groups, an Application
 - ALB HTTP listener and IP target group with application health checks, defined in Terraform.
 - ECS execution role for pulling images and publishing logs, defined in Terraform.
 
-See [Infrastructure configuration](#infrastructure-configuration) for deployment status. The ECS task definition, service and connection to CloudWatch logging are still to be implemented.
+See [Infrastructure configuration](#infrastructure-configuration) for deployment status. The ECS task definition includes CloudWatch logging; the ECS service is still to be implemented.
 
 ## Architecture Diagram
 
@@ -125,7 +125,7 @@ The ALB spans public subnets in `eu-west-2a` and `eu-west-2b`. Subnets in two zo
 3. **Image registry — complete:** Provisioned ECR, pushed `v1`, pulled it back and verified the health endpoint locally.
 4. **Networking and security — defined:** Added the VPC, subnets, routing and ALB/ECS security groups. Deployment is pending.
 5. **Load balancing and IAM — defined:** Added the ALB, target group, listener and execution role. Deployment is pending.
-6. **Logging and ECS — in progress:** Defined seven-day log retention and the ECS cluster. The ARM64 task definition and service are next, followed by cost review and deployment.
+6. **Logging and ECS — in progress:** Defined seven-day log retention, the ECS cluster and an ARM64 task definition. The ECS service is next, followed by cost review and deployment.
 7. **Delivery automation — later:** Introduce remote Terraform state and GitHub Actions with AWS OIDC authentication.
 
 ## Endpoints
@@ -254,9 +254,9 @@ Terraform currently uses local state. Keep state files, the `.terraform/` direct
 
 ### Local modules
 
-The root configuration connects six local modules: `networking`, `security`, `alb`, `iam`, `logging` and `ecr`. Each declares its inputs, outputs and AWS provider requirement; provider configuration and credentials remain at the root. Module outputs pass VPC, subnet and security group IDs between components.
+The root configuration connects seven local modules: `networking`, `security`, `alb`, `iam`, `logging`, `ecr` and `ecs`. Each declares its inputs, outputs and AWS provider requirement; provider configuration and credentials remain at the root. Module outputs pass VPC, subnet and security group IDs between components.
 
-ECR is managed by the `ecr` module. Its existing local state entry was migrated from `aws_ecr_repository.cloud_api` to `module.ecr.aws_ecr_repository.cloud_api` using `terraform state mv`, preserving the repository and its images. No `moved` blocks are used. ECS configuration remains at the root while workload setup is deferred. The other module resources have not been applied and required no state migrations.
+ECR is managed by the `ecr` module. Its existing local state entry was migrated from `aws_ecr_repository.cloud_api` to `module.ecr.aws_ecr_repository.cloud_api` using `terraform state mv`, preserving the repository and its images. No `moved` blocks are used. The ECS cluster and task definition are in the `ecs` module. ECS has not been applied, so moving its configuration required no state migration. The other module resources have not been applied either.
 
 Run `terraform -chdir=terraform init` after introducing the modules, then validate and inspect the plan. The refactor must not replace or destroy ECR. Do not apply until the complete deployment and costs have been reviewed.
 
@@ -306,7 +306,8 @@ The existing `v1` image targets `linux/arm64`. The future Fargate task definitio
 | IAM execution role | Trusts ECS tasks; managed policy for ECR pulls and CloudWatch logging | Defined; not applied |
 | CloudWatch | Log group with seven-day retention | Defined; not applied |
 | ECS cluster | Cluster with Container Insights disabled | Defined; not applied |
-| ECS workload | ARM64 task definition and service | Not yet defined |
+| ECS task definition | ARM64, 0.25 vCPU, 512 MiB, ECR `v1`, CloudWatch logging | Defined; not applied |
+| ECS service | Task scheduling and ALB registration | Not yet defined |
 
 The intended request path is client → ALB:80 → ECS task:3000 → Express API. Only the ALB security group is allowed to initiate inbound connections to the task's application port. HTTP is currently unencrypted; HTTPS remains a future enhancement.
 
@@ -324,10 +325,10 @@ tsconfig.json     TypeScript compiler configuration
 terraform/
   providers.tf    Terraform and AWS provider configuration
   variables.tf    Input variables, including the environment tag
-  ecs.tf          ECS cluster (kept at root)
   main.tf         Local module composition and connections
   outputs.tf      ECR repository URL output
   modules/
+    ecs/          ECS cluster and ARM64 task definition
     ecr/          Private image repository
     networking/   VPC, subnets and internet routing
     security/     ALB and ECS security groups and traffic rules
@@ -338,7 +339,7 @@ terraform/
 
 ## Planned milestones
 
-- Define the ECS cluster, ARM64 task definition and service.
+- Define the ECS service and connect it to the ALB target group.
 - Review costs, deploy the pending infrastructure and verify the API through the ALB.
 - Add further security and cost controls, including image cleanup and HTTPS.
 - Add S3 remote Terraform state and GitHub Actions with AWS OIDC authentication.
