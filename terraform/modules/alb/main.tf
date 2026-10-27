@@ -1,9 +1,9 @@
 resource "aws_lb" "cloud_api" {
   name                       = "cloud-api-alb"
   load_balancer_type         = "application"
-  security_groups            = [aws_security_group.alb.id]
+  security_groups            = [var.security_group_id]
   internal                   = false
-  subnets                    = [aws_subnet.public_a.id, aws_subnet.public_b.id]
+  subnets                    = var.public_subnet_ids
   enable_deletion_protection = false
 
   tags = {
@@ -19,7 +19,7 @@ resource "aws_lb_target_group" "cloud_api" {
   protocol    = "HTTP"
   port        = 3000
   target_type = "ip"
-  vpc_id      = aws_vpc.cloud_api.id
+  vpc_id      = var.vpc_id
 
   health_check {
     path     = "/health"

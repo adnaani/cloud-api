@@ -1,7 +1,7 @@
 resource "aws_security_group" "alb" {
   name        = "cloud-api-alb-sg"
   description = "Security group for the Cloud API ALB"
-  vpc_id      = aws_vpc.cloud_api.id
+  vpc_id      = var.vpc_id
 
   tags = {
     Name        = "cloud-api-alb-sg"
@@ -24,7 +24,7 @@ resource "aws_vpc_security_group_ingress_rule" "alb_http" {
 resource "aws_security_group" "ecs" {
   name        = "cloud-api-ecs-sg"
   description = "Security group for the Cloud API ECS tasks"
-  vpc_id      = aws_vpc.cloud_api.id
+  vpc_id      = var.vpc_id
 
   tags = {
     Name        = "cloud-api-ecs-sg"

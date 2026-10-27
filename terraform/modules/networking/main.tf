@@ -1,5 +1,5 @@
 resource "aws_vpc" "cloud_api" {
-  cidr_block           = "10.0.0.0/16"
+  cidr_block           = var.vpc_cidr
   instance_tenancy     = "default"
   enable_dns_support   = true
   enable_dns_hostnames = true
@@ -14,8 +14,8 @@ resource "aws_vpc" "cloud_api" {
 
 resource "aws_subnet" "public_a" {
   vpc_id                  = aws_vpc.cloud_api.id
-  cidr_block              = "10.0.1.0/24"
-  availability_zone       = "eu-west-2a"
+  cidr_block              = var.public_subnet_a_cidr
+  availability_zone       = var.availability_zone_a
   map_public_ip_on_launch = true
 
   tags = {
@@ -28,8 +28,8 @@ resource "aws_subnet" "public_a" {
 
 resource "aws_subnet" "public_b" {
   vpc_id                  = aws_vpc.cloud_api.id
-  cidr_block              = "10.0.2.0/24"
-  availability_zone       = "eu-west-2b"
+  cidr_block              = var.public_subnet_b_cidr
+  availability_zone       = var.availability_zone_b
   map_public_ip_on_launch = true
 
   tags = {
