@@ -58,3 +58,35 @@ resource "aws_ecs_task_definition" "cloud_api" {
     ManagedBy   = "terraform"
   }
 }
+
+resource "aws_ecs_service" "cloud_api" {
+  name                              = "cloud-api-service"
+  cluster                           = aws_ecs_cluster.cloud_api.id
+  task_definition                   = aws_ecs_task_definition.cloud_api.arn
+  desired_count                     = 1
+  launch_type                       = "FARGATE"
+  health_check_grace_period_seconds = 60
+  deployment_circuit_breaker {
+    enable   = true
+    rollback = true
+  }
+
+  network_configuration {
+    subnets          = var.public_subnet_ids
+    security_groups  = [var.ecs_security_group_id]
+    assign_public_ip = true
+  }
+
+  load_balancer {
+    target_group_arn = var.target_group_arn
+    container_name   = "cloud-api"
+    container_port   = var.cloud_api_container_port
+  }
+
+  tags = {
+    Name        = "cloud-api-service"
+    Environment = var.environment
+    Project     = "cloud-api"
+    ManagedBy   = "terraform"
+  }
+}

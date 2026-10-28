@@ -34,9 +34,19 @@ module "ecr" {
 }
 
 module "ecs" {
-  source             = "./modules/ecs"
-  environment        = var.environment
-  cloud_api_image    = "${module.ecr.repository_url}:v1"
-  execution_role_arn = module.iam.execution_role_arn
-  log_group_name     = module.logging.log_group_name
+  source                = "./modules/ecs"
+  environment           = var.environment
+  cloud_api_image       = "${module.ecr.repository_url}:v1"
+  execution_role_arn    = module.iam.execution_role_arn
+  log_group_name        = module.logging.log_group_name
+  public_subnet_ids     = [module.networking.public_subnet_a_id, module.networking.public_subnet_b_id]
+  ecs_security_group_id = module.security.ecs_security_group_id
+  target_group_arn      = module.alb.target_group_arn
+
+  depends_on = [
+    module.alb,
+    module.iam,
+    module.networking,
+    module.security,
+  ]
 }

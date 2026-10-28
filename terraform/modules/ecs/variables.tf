@@ -40,3 +40,18 @@ variable "aws_region" {
   type        = string
   default     = "eu-west-2"
 }
+
+variable "public_subnet_ids" {
+  description = "List of public subnet IDs for the ECS service."
+  type        = list(string)
+}
+
+variable "ecs_security_group_id" {
+  description = "Security group ID for the ECS service."
+  type        = string
+}
+
+variable "target_group_arn" {
+  description = "ARN of the target group for the ECS service."
+  type        = string
+}
