@@ -6,3 +6,4 @@ dist/
 *.tfstate
 *.tfstate.*
 crash.log
+terraform-state-backup.json
